@@ -56,3 +56,28 @@ pub fn fuzz_run_str<F>(some_closure: F)
         }
     }
 }
+
+
+pub fn fuzz_run_bytes<F>(some_closure: F)
+    where F: FnOnce(&[u8]) + RecoverSafe
+{
+    unsafe {
+        __afl_manual_init();
+    }
+
+    let mut input = vec![];
+    let result = io::stdin().read_to_end(&mut input);
+    if result.is_err() {
+        return;
+    }
+
+    let result = panic::recover(|| {
+        some_closure(&input);
+    });
+    if result.is_err() {
+        // TODO: add option to prevent this abort?
+        unsafe {
+            abort();
+        }
+    }
+}
