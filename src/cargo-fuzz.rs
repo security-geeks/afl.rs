@@ -1,5 +1,5 @@
 use std::env;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 
 fn main() {
@@ -7,9 +7,6 @@ fn main() {
     let args = env::args().skip(1).collect::<Vec<_>>();
     let output = Command::new("afl-fuzz")
                           .args(&args)
-                          .stdin(Stdio::inherit())
-                          .stderr(Stdio::inherit())
-                          .stdout(Stdio::inherit())
-                          .output()
+                          .status()
                           .unwrap_or_else(|e| panic!("failed to execute process: {}", e));
 }
