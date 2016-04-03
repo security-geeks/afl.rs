@@ -23,10 +23,6 @@ byteorder = "0.3"
 path = "afl-plugin/"
 version = "0.1.0"
 
-[lib]
-name = "afl"
-path = "src/lib.rs"
-
 [[bin]]
 name = "cargo-fuzz"
 path = "src/cargo-fuzz.rs"
