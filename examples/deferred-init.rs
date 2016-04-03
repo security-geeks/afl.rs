@@ -19,26 +19,20 @@ fn main() {
     println!("An eternity in...");
     thread::sleep_ms(500);
 
-    unsafe {
-        afl::init();
-    }
-
-    println!("the blink of an eye.");
-
-    let mut input = String::new();
-    io::stdin().read_to_string(&mut input).unwrap();
-
-    if input.starts_with("x") {
-        println!("going...");
-        if input.starts_with("xy") {
+    afl::fuzz_run_str(|input: &str| {
+        println!("the blink of an eye.");
+        if input.starts_with("x") {
             println!("going...");
-            if input.starts_with("xyz") {
-                println!("gone!");
-                unsafe {
-                    let x: *mut usize = 0 as *mut usize;
-                    *x = 0xBEEF;
+            if input.starts_with("xy") {
+                println!("going...");
+                if input.starts_with("xyz") {
+                    println!("gone!");
+                    unsafe {
+                        let x: *mut usize = 0 as *mut usize;
+                        *x = 0xBEEF;
+                    }
                 }
             }
         }
-    }
+    });
 }

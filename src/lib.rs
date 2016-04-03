@@ -4,6 +4,8 @@
 // you may not use this file except in compliance with the License.
 // See `LICENSE` in this repository.
 
+use std::io::{self, Read};
+
 #[cfg(not(test))]
 #[link(name="afl-llvm-rt", kind="static")]
 extern "C" {
@@ -26,7 +28,9 @@ pub unsafe fn init() {
     __afl_manual_init();
 }
 
-pub fn run(some_closure: Fn(&[u8]) {
+pub fn fuzz_run_str<F>(some_closure: F)
+    where F: Fn(&str)
+{
     unsafe {
         __afl_manual_init();
     }
@@ -34,6 +38,6 @@ pub fn run(some_closure: Fn(&[u8]) {
     let mut input = String::new();
     let result = io::stdin().read_to_string(&mut input);
     if result.is_ok() {
-        some_clousure(result);
+        some_closure(&input);
     }
 }
