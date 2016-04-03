@@ -19,7 +19,7 @@ fn main() {
     println!("An eternity in...");
     thread::sleep_ms(500);
 
-    afl::fuzz_run_str(|input: &str| {
+    afl::run_str(|input: &str| {
         println!("the blink of an eye.");
         if input.starts_with("x") {
             println!("going...");

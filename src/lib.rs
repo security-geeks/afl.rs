@@ -34,7 +34,7 @@ pub unsafe fn init() {
     __afl_manual_init();
 }
 
-pub fn fuzz_run_str<F>(some_closure: F)
+pub fn run_str<F>(some_closure: F)
     where F: FnOnce(&str) + RecoverSafe
 {
     unsafe {
@@ -59,7 +59,7 @@ pub fn fuzz_run_str<F>(some_closure: F)
 }
 
 
-pub fn fuzz_run_bytes<F>(some_closure: F)
+pub fn run<F>(some_closure: F)
     where F: FnOnce(&[u8]) + RecoverSafe
 {
     unsafe {
