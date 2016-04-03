@@ -25,3 +25,15 @@ extern "C" {
 pub unsafe fn init() {
     __afl_manual_init();
 }
+
+pub fn run(some_closure: Fn(&[u8]) {
+    unsafe {
+        __afl_manual_init();
+    }
+
+    let mut input = String::new();
+    let result = io::stdin().read_to_string(&mut input);
+    if result.is_ok() {
+        some_clousure(result);
+    }
+}
