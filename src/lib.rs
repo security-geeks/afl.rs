@@ -4,7 +4,12 @@
 // you may not use this file except in compliance with the License.
 // See `LICENSE` in this repository.
 
+#![feature(core_intrinsics)]
+#![feature(recover, std_panic)]
+
+use std::intrinsics::abort;
 use std::io::{self, Read};
+use std::panic::{self, RecoverSafe};
 
 #[cfg(not(test))]
 #[link(name="afl-llvm-rt", kind="static")]
@@ -29,7 +34,7 @@ pub unsafe fn init() {
 }
 
 pub fn fuzz_run_str<F>(some_closure: F)
-    where F: Fn(&str)
+    where F: FnOnce(&str) + RecoverSafe
 {
     unsafe {
         __afl_manual_init();
@@ -37,7 +42,17 @@ pub fn fuzz_run_str<F>(some_closure: F)
 
     let mut input = String::new();
     let result = io::stdin().read_to_string(&mut input);
-    if result.is_ok() {
+    if result.is_err() {
+        return;
+    }
+
+    let result = panic::recover(|| {
         some_closure(&input);
+    });
+    if result.is_err() {
+        // TODO: add option to prevent this abort?
+        unsafe {
+            abort();
+        }
     }
 }
