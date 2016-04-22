@@ -10,7 +10,7 @@
 
 use std::intrinsics::abort;
 use std::io::{self, Read};
-use std::panic::{self, RecoverSafe};
+use std::panic::{self, UnwindSafe};
 
 #[cfg(not(test))]
 #[link(name="afl-llvm-rt", kind="static")]
@@ -35,7 +35,7 @@ pub unsafe fn init() {
 }
 
 pub fn run_str<F>(some_closure: F)
-    where F: FnOnce(&str) + RecoverSafe
+    where F: FnOnce(&str) + UnwindSafe
 {
     unsafe {
         __afl_manual_init();
@@ -60,7 +60,7 @@ pub fn run_str<F>(some_closure: F)
 
 
 pub fn run<F>(some_closure: F)
-    where F: FnOnce(&[u8]) + RecoverSafe
+    where F: FnOnce(&[u8]) + UnwindSafe
 {
     unsafe {
         __afl_manual_init();
