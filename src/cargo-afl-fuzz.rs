@@ -1,6 +1,4 @@
 use std::env;
-use std::io::{self, Write};
-use std::process::Command;
 
 extern crate afl_sys;
 
