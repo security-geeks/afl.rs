@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
 export LLVM_CONFIG=$(which llvm-config-3.8)
 
