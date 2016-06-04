@@ -14,5 +14,8 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export LLVM_CONFIG=$(which llvm-config-3.8); fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker build -t afl.rs -f ci/Dockerfile .; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then RUN="docker run -t afl.rs"; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then SL=/System/Library; PL=com.apple.ReportCrash; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then launchctl unload -w ${SL}/LaunchAgents/${PL}.plist; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo launchctl unload -w ${SL}/LaunchDaemons/${PL}.Root.plist; fi
 script:
   - $RUN ./ci/run.sh

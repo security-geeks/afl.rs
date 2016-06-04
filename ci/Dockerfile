@@ -18,3 +18,5 @@ WORKDIR /opt/afl.rs
 ADD . .
 
 ENV CXX /usr/bin/g++-4.9
+
+RUN sh -c 'echo core > /proc/sys/kernel/core_pattern'
