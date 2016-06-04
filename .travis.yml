@@ -17,5 +17,6 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then SL=/System/Library; PL=com.apple.ReportCrash; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then launchctl unload -w ${SL}/LaunchAgents/${PL}.plist; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then sudo launchctl unload -w ${SL}/LaunchDaemons/${PL}.Root.plist; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then alias timeout=gtimeout; fi
 script:
   - $RUN ./ci/run.sh
