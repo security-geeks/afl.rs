@@ -1,5 +1,5 @@
 <h1 align="center">
-  <a href="https://github.com/frewsxcv/afl.rs/issues/66"><img src="etc/logo.gif" alt="afl.rs logo"></a>
+  <a href="https://github.com/frewsxcv/afl.rs/issues/66"><img src="https://raw.githubusercontent.com/rust-fuzz/afl.rs/refs/heads/master/etc/logo.gif" alt="afl.rs logo"></a>
   <br>
   afl.rs
 </h1>
@@ -16,11 +16,32 @@ Documentation can be found in the [Rust Fuzz Book](https://rust-fuzz.github.io/b
 
 ## What does it look like?
 
-<img src="etc/screencap.gif" width="563" height="368" alt="Screen recording of afl">
+<img src="https://raw.githubusercontent.com/rust-fuzz/afl.rs/refs/heads/master/etc/screencap.gif" width="563" height="368" alt="Screen recording of afl">
 
 Screen recording of AFL running on Rust code.
 
+## Hints
+
+Before starting to fuzz, you should reconfigure your system for optimal
+performance and better crash detection. This can be done with `cargo afl system-config`.
+But this subcommand requires root, so it uses sudo internally. Hence, you might need to enter
+your password.
+
+By default, the AFL++ [CMPLOG](https://github.com/AFLplusplus/AFLplusplus/blob/stable/instrumentation/README.cmplog.md)
+feature is activated, which helps to achieve good code coverage.
+However, it is not beneficial to activate CMPLOG on more than two instances.
+So if you run multiple AFL++ instances on your fuzzing target, you can disable CMPLOG by specifying the command line parameter '-c -'.
+To omit CMPLOG instrumentation from the built target entirely, set the environment variable
+`AFLRS_NO_CMPLOG` to `1` when building.
+
+This [document](https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/fuzzing_in_depth.md)
+will familiarize you with AFL++ features to help in running a successful fuzzing campaign.
+
+By default, the `fuzzing` config is set when `cargo-afl` is used to build. If you want to prevent this, just set the
+environment variable `AFL_NO_CFG_FUZZING` to `1` when building.
+
 [conditional compilation]: https://doc.rust-lang.org/reference.html#conditional-compilation
+
 [Cargo feature]: http://doc.crates.io/manifest.html#the-[features]-section
 [example-defer]: https://github.com/frewsxcv/afl.rs/blob/master/examples/deferred-init.rs
 [LLVM pass]: https://github.com/frewsxcv/afl.rs/blob/master/plugin/src/afl-llvm-pass.o.cc
@@ -33,20 +54,48 @@ Screen recording of AFL running on Rust code.
 [AFLplusplus]: https://aflplus.plus/
 [rust]: https://www.rust-lang.org
 
-## `lazy_static` variables
+## Resettable State (`fuzz_with_reset!`)
 
-`lazy_static` variables present problems for AFL's persistent mode, which afl.rs uses. Such variables can cause AFL to give incorrectly low stability reports, or fail to report timeouts, for example.
+AFL++ persistent mode runs the fuzz target in a loop. Static initialization (e.g., `OnceLock`, `lazy_static`, `once_cell::Lazy`) only executes on the first iteration — subsequent iterations skip those code paths, causing AFL's stability metric to drop.
 
-To address such problems, rust-fuzz provides a ["resettable" version](https://github.com/rust-fuzz/resettable-lazy-static.rs) of `lazy_static`. To use it, make the following two changes to your target's `Cargo.toml` file.
+Use `fuzz_with_reset!` to provide a reset closure that clears static state after each iteration.
 
-1. Add a `[patch.crates-io]` section and overide the `lazy_static` dependency with the rust-fuzz version:
-    ```toml
-    [patch.crates-io]
-    lazy_static = { git = "https://github.com/rust-fuzz/resettable-lazy-static.rs" }
+Note: the example uses `Mutex<Option<T>>` instead of `OnceLock`/`OnceCell` because those types do not support resetting out-of-the-box.
 
-    ```
-2. Enable the `reset_lazy_static` feature on afl.rs:
-    ```toml
-    [dependencies]
-    afl = { version = "*", features = ["reset_lazy_static"] }
-    ```
+```rust
+use std::sync::Mutex;
+
+static CACHE: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+
+fn main() {
+    afl::fuzz_with_reset!(|data: &[u8]| {
+        let mut cache = CACHE.lock().unwrap();
+        if cache.is_none() {
+            *cache = Some(data.to_vec());
+        }
+        drop(cache);
+        // ... fuzz logic ...
+    }, || {
+        // Reset closure: called after each successful iteration
+        *CACHE.lock().unwrap() = None;
+    });
+}
+```
+
+A `fuzz_with_reset_nohook!` variant is also available (like `fuzz_nohook!`, it does not override the panic hook).
+
+See [`afl/examples/reset_demo.rs`](afl/examples/reset_demo.rs) for a complete example.
+
+## IJON
+
+If you want to use [IJON](https://github.com/AFLplusplus/AFLplusplus/blob/stable/docs/IJON.md) - helping fuzzer coverage through code annotation - then
+have a look at the [maze example](afl/examples/maze.rs).
+
+Note that the IJON macros have been rustyfied to lowercase - hence `IJON_MAX(x)` is `ijon_max(x)` in Rust.
+
+You will need to the following imports from `afl`, in addition to any macros that you use (e.g., `afl::ijon_max`):
+
+```
+use afl::ijon_hashint;
+use afl::ijon_hashstr;
+```
